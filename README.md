@@ -9,7 +9,7 @@ and target group ARN so listeners and DNS records can be built on top.
 
 ```hcl
 module "alb" {
-  source = "github.com/cybercapybara/terraform-aws-alb"
+  source = "github.com/moveeeax/terraform-aws-alb"
 
   name    = "prod-alb"
   vpc_id  = "vpc-0abc123"
