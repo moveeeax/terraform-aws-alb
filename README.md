@@ -28,7 +28,7 @@ A runnable example lives in [`examples/basic`](examples/basic).
 
 The module deliberately stops at the load balancer and its target group. It does
 **not** create listeners, certificates, or security groups — build those in the
-calling configuration on top of `arn` and `target_group_arn`. Two consequences
+calling configuration on top of `arn` and `target_group_arn`. Three consequences
 are worth calling out:
 
 - **Terminate TLS yourself.** Because no listener is created here, there is no
@@ -39,6 +39,12 @@ are worth calling out:
 - **Pass a security group.** `security_groups` defaults to `[]`, which makes AWS
   attach the VPC default security group. Pass an explicit, narrowly scoped
   security group for anything beyond a scratch environment.
+- **Target group updates create before they destroy.** `target_port`,
+  `target_protocol`, `target_type`, and `vpc_id` all force a new target group,
+  and AWS refuses to delete a target group that a listener still points at. The
+  target group's `create_before_destroy` lifecycle means the replacement is
+  created first, so a single `terraform apply` can update both the target
+  group and a listener that references `target_group_arn` in one pass.
 
 ## Secure defaults
 
