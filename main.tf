@@ -34,4 +34,17 @@ resource "aws_lb_target_group" "this" {
   }
 
   tags = var.tags
+
+  # name, port, protocol, target_type, and vpc_id all force replacement. A
+  # target group can't be deleted while it's still attached to a listener
+  # rule, so without create_before_destroy an in-place change to any of
+  # those attributes fails apply once the calling configuration has wired
+  # target_group_arn into an aws_lb_listener or aws_lb_listener_rule: the
+  # old target group can't be destroyed until the listener is repointed,
+  # but the listener can't be repointed until the new target group exists.
+  # create_before_destroy makes the new target group first, so the
+  # listener update and the old target group's destroy can both proceed.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
