@@ -70,3 +70,23 @@ run "rejects_access_logs_without_a_bucket" {
 
   expect_failures = [var.access_logs]
 }
+
+run "rejects_a_target_group_name_prefix_longer_than_six_characters" {
+  command = plan
+
+  variables {
+    target_group_name_prefix = "toolong"
+  }
+
+  expect_failures = [var.target_group_name_prefix]
+}
+
+run "rejects_a_target_group_name_prefix_starting_with_a_hyphen" {
+  command = plan
+
+  variables {
+    target_group_name_prefix = "-tg"
+  }
+
+  expect_failures = [var.target_group_name_prefix]
+}

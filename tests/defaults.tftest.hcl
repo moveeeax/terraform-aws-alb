@@ -33,6 +33,26 @@ run "secure_defaults" {
     condition     = length(aws_lb.this.access_logs) == 0
     error_message = "No access_logs block must be emitted when var.access_logs is null."
   }
+
+  # Existing callers must keep their fixed-name target group; switching them
+  # to a generated name would replace it on upgrade.
+  assert {
+    condition     = aws_lb_target_group.this.name == "test-alb"
+    error_message = "Without target_group_name_prefix the target group must keep the fixed name var.name."
+  }
+}
+
+run "target_group_name_prefix_replaces_the_fixed_name" {
+  command = plan
+
+  variables {
+    target_group_name_prefix = "tg-"
+  }
+
+  assert {
+    condition     = aws_lb_target_group.this.name_prefix == "tg-"
+    error_message = "The configured prefix must be passed to the target group."
+  }
 }
 
 run "access_logs_are_wired_through_when_configured" {

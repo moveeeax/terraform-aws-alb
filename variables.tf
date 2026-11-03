@@ -63,6 +63,17 @@ variable "target_type" {
   }
 }
 
+variable "target_group_name_prefix" {
+  description = "Prefix (up to 6 characters) for a generated, unique target group name. When null the target group is named var.name, which keeps existing target groups in place but means a change that forces a new target group fails with a duplicate-name error. Setting this replaces the existing target group once."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.target_group_name_prefix == null || can(regex("^[0-9A-Za-z][0-9A-Za-z-]{0,5}$", var.target_group_name_prefix))
+    error_message = "The target_group_name_prefix must be 1-6 characters of letters, digits, and hyphens, and must not start with a hyphen."
+  }
+}
+
 variable "health_check_path" {
   description = "Destination path for target group health checks."
   type        = string
