@@ -22,3 +22,8 @@ output "target_group_arn" {
   description = "ARN of the target group."
   value       = aws_lb_target_group.this.arn
 }
+
+output "target_group_name" {
+  description = "Name of the target group. Generated from target_group_name_prefix when it is set."
+  value       = aws_lb_target_group.this.name
+}

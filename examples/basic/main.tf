@@ -39,6 +39,10 @@ module "alb" {
   target_port     = 80
   target_protocol = "HTTP"
 
+  # Lets a later change to the target port or protocol replace the target
+  # group in one apply; see the README's Scope section.
+  target_group_name_prefix = "ex-"
+
   tags = {
     Environment = "sandbox"
     ManagedBy   = "terraform"

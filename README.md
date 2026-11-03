@@ -15,6 +15,8 @@ module "alb" {
   vpc_id  = "vpc-0abc123"
   subnets = ["subnet-0a", "subnet-0b"]
 
+  target_group_name_prefix = "prod-"
+
   tags = {
     Environment = "production"
     ManagedBy   = "terraform"
@@ -39,12 +41,26 @@ are worth calling out:
 - **Pass a security group.** `security_groups` defaults to `[]`, which makes AWS
   attach the VPC default security group. Pass an explicit, narrowly scoped
   security group for anything beyond a scratch environment.
-- **Target group updates create before they destroy.** `target_port`,
-  `target_protocol`, `target_type`, and `vpc_id` all force a new target group,
-  and AWS refuses to delete a target group that a listener still points at. The
-  target group's `create_before_destroy` lifecycle means the replacement is
-  created first, so a single `terraform apply` can update both the target
-  group and a listener that references `target_group_arn` in one pass.
+- **Set `target_group_name_prefix` if the target group may ever be replaced.**
+  `target_port`, `target_protocol`, `target_type`, and `vpc_id` all force a
+  new target group, and AWS refuses to delete a target group that a listener
+  still points at. The target group therefore uses `create_before_destroy`:
+  the replacement is created first, the listener is repointed, and only then
+  is the old target group deleted. Target group names are unique per account
+  and region, so this only works when the replacement gets a different name.
+  With `target_group_name_prefix` set (up to 6 characters), every target group
+  gets a generated name such as `prod-20261103...`, and a single
+  `terraform apply` updates both the target group and a listener that
+  references `target_group_arn`. Without it the target group is named
+  `name`, and an apply that changes any of those four inputs fails with a
+  "target group already exists" error before anything is changed.
+
+  `target_group_name_prefix` defaults to `null` so that upgrading the module
+  leaves existing target groups alone. Setting it on an existing deployment
+  replaces the target group once (create the new one, repoint listeners,
+  delete the old one). Targets registered outside Terraform, and anything
+  outside this configuration that refers to the old name or ARN, have to be
+  moved by hand. New deployments should set it from the start.
 
 ## Secure defaults
 
@@ -106,6 +122,7 @@ module itself still only requires >= 1.5.
 | `target_protocol`            | Protocol used to route traffic (`HTTP`/`HTTPS`).  | `string`       | `"HTTP"`     |    no    |
 | `target_type`                | Type of target registered (`instance`/`ip`).      | `string`       | `"instance"` |    no    |
 | `health_check_path`          | Destination path for health checks.               | `string`       | `"/"`        |    no    |
+| `target_group_name_prefix`   | Target group name prefix (1-6 chars), see Scope.  | `string`       | `null`       |    no    |
 | `enable_deletion_protection` | Enable deletion protection.                       | `bool`         | `false`      |    no    |
 | `drop_invalid_header_fields` | Strip malformed HTTP headers before targets.      | `bool`         | `true`       |    no    |
 | `access_logs`                | Access log config, see below. `null` disables.    | `object`       | `null`       |    no    |
@@ -121,13 +138,14 @@ module itself still only requires >= 1.5.
 
 ## Outputs
 
-| Name               | Description                                   |
-|--------------------|-----------------------------------------------|
-| `id`               | ARN of the load balancer.                     |
-| `arn`              | ARN of the load balancer.                     |
-| `dns_name`         | DNS name of the load balancer.                |
-| `zone_id`          | Route 53 hosted zone ID of the load balancer. |
-| `target_group_arn` | ARN of the target group.                      |
+| Name                | Description                                   |
+|---------------------|-----------------------------------------------|
+| `id`                | ARN of the load balancer.                     |
+| `arn`               | ARN of the load balancer.                     |
+| `dns_name`          | DNS name of the load balancer.                |
+| `zone_id`           | Route 53 hosted zone ID of the load balancer. |
+| `target_group_arn`  | ARN of the target group.                      |
+| `target_group_name` | Name of the target group.                     |
 
 ## License
 
