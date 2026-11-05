@@ -150,3 +150,7 @@ module itself still only requires >= 1.5.
 ## License
 
 [MIT](LICENSE)
+
+---
+
+**Archived on 2026-11-05.** two resources (aws_lb + one aws_lb_target_group, no listener) is a thin slice of terraform-aws-modules/alb, which already covers listeners, HTTPS redirects, multiple target groups and security groups; only worth keeping if it becomes an opinionated "HTTPS-only ALB" wrapper (features 1-2).
